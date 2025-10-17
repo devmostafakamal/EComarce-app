@@ -15,12 +15,18 @@ import Register from "./pages/auth/Register";
 import NotFound from "./pages/not-found";
 import CheckAuth from "./components/common/check-auth";
 import { Toaster } from "react-hot-toast";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { checkAuth } from "./store/auth-slice";
 
 function App() {
   // const isAuthenticated = true; // Example
   // const user = { name: "mostafa", role: "user" }; // or "user"
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
   return (
     <div className="flex flex-col overflow-hidden bg-white">
       <Toaster position="top-center" reverseOrder={false} />

@@ -3,6 +3,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
+
 const registerUser = async (req, res) => {
   const { userName, email, password } = req.body;
 
@@ -76,7 +77,11 @@ const loginUser = async (req, res) => {
     );
 
     // Send token as cookie + user info
-    res.cookie("token", token, { httpOnly: true, secure: false });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
     res.status(200).json({
       success: true,
       message: "Logged in successfully",
@@ -97,4 +102,36 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const logoutUser = (req, res) => {
+  res.clearCookie("token").json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
+
+// auth middleware
+const authMiddleware = (req, res, next) => {
+  const token = req.cookies.token;
+  // console.log("Token from cookie:", token);
+
+  if (!token) {
+    // console.log("❌ No token found in cookie");
+    return res
+      .status(401)
+      .json({ success: false, message: "Unauthorized user" });
+  }
+
+  try {
+    const decode = jwt.verify(token, process.env.CLIENT_SECRET_KEY);
+    // console.log("✅ Verified user:", decode);
+    req.user = decode;
+    next();
+  } catch (error) {
+    // console.log("❌ JWT verification failed:", error.message);
+    return res
+      .status(401)
+      .json({ success: false, message: "Invalid or expired token" });
+  }
+};
+
+module.exports = { registerUser, loginUser, logoutUser, authMiddleware };
